@@ -3,6 +3,7 @@ import { ShoppingBag, Search, Menu } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import CurrencyToggle from './CurrencyToggle';
 
 export default function Header() {
     const { cart, setIsCartOpen, setIsNavOpen, isEntered } = useStore();
@@ -32,6 +33,7 @@ export default function Header() {
 
             {/* Right - Icons */}
             <div className="flex items-center gap-4">
+                <CurrencyToggle />
                 <button className="p-2 hover:text-accent transition-colors" aria-label="Search">
                     <Search className="w-5 h-5" />
                 </button>

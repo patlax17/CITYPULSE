@@ -1,9 +1,10 @@
 'use client';
 import { Product } from '@/lib/data';
 import { useStore } from '@/context/StoreContext';
+import { formatCurrency } from '@/lib/currency';
 
 export default function ProductCard({ product }: { product: Product }) {
-    const { addToCart } = useStore();
+    const { addToCart, currency } = useStore();
 
     return (
         <div className="group relative bg-background border-r border-b border-zinc-800 flex flex-col h-full aspect-[3/5] overflow-hidden">
@@ -29,7 +30,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <div className="p-4 flex flex-col gap-3 justify-between bg-background">
                 <div className="flex justify-between items-start gap-2">
                     <h3 className="text-sm font-bold uppercase leading-tight text-foreground">{product.title}</h3>
-                    <span className="font-mono text-xs text-zinc-400 whitespace-nowrap">${product.price}.00</span>
+                    <span className="font-mono text-xs text-zinc-400 whitespace-nowrap">{formatCurrency(product.price, currency)}</span>
                 </div>
 
                 <button

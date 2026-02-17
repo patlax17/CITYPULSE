@@ -6,10 +6,9 @@ import { X } from 'lucide-react';
 
 const LINKS = [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/vault', label: 'The Gateway' },
-    { href: '/archive', label: 'Archive' },
-    { href: '/experience', label: 'Experience' },
+    { href: '/the-circuit', label: 'The Circuit' },
+    { href: '/shop', label: 'Collections' },
+    { href: '/lineage', label: 'Lineage' },
     { href: '/contact', label: 'Contact' },
 ];
 

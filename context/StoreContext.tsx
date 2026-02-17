@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '@/lib/data';
+import { Currency } from '@/lib/currency';
 
 interface CartItem extends Product {
     quantity: number;
@@ -21,6 +22,8 @@ interface StoreContextType {
     spinsAvailable: number;
     decrementSpin: () => void;
     resetSpins: () => void;
+    currency: Currency;
+    toggleCurrency: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -31,6 +34,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     const [isNavOpen, setIsNavOpen] = useState(false);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [spinsAvailable, setSpinsAvailable] = useState(2);
+    const [currency, setCurrency] = useState<Currency>('USD');
 
     // Load state from session storage
     useEffect(() => {
@@ -80,6 +84,10 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.setItem('city_pulse_spins', '2');
     }
 
+    const toggleCurrency = () => {
+        setCurrency((prev) => prev === 'USD' ? 'NGN' : 'USD');
+    };
+
     return (
         <StoreContext.Provider
             value={{
@@ -94,7 +102,9 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
                 removeFromCart,
                 spinsAvailable,
                 decrementSpin,
-                resetSpins
+                resetSpins,
+                currency,
+                toggleCurrency
             }}
         >
             {children}
