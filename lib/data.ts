@@ -11,7 +11,7 @@ export const PRODUCTS: Product[] = [
     {
         id: '1',
         title: 'CITY PULSE JACKET - BLACK/GREY',
-        price: 185,
+        price: 200,
         image: '/images/products/jacket-1.png',
         status: 'NEW RELEASE',
         category: 'Tops',
@@ -19,7 +19,7 @@ export const PRODUCTS: Product[] = [
     {
         id: '2',
         title: 'CITY PULSE JACKET - NAVY/GREEN',
-        price: 185,
+        price: 200,
         image: '/images/products/jacket-2.png',
         status: 'AVAILABLE',
         category: 'Tops',
@@ -27,7 +27,7 @@ export const PRODUCTS: Product[] = [
     {
         id: '3',
         title: 'NEWARK SKYLINE TEE - SAND',
-        price: 65,
+        price: 100,
         image: '/images/products/tee-1.png',
         status: 'LOW STOCK',
         category: 'Tops',
@@ -35,7 +35,7 @@ export const PRODUCTS: Product[] = [
     {
         id: '4',
         title: 'CITY PULSE TEE - BLACK',
-        price: 65,
+        price: 100,
         image: '/images/products/tee-2.png',
         status: 'AVAILABLE',
         category: 'Tops',
