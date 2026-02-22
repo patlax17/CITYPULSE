@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono, Pirata_One } from 'next/font/google'
 import './globals.css'
 import { clsx } from 'clsx'
 import ClientLayout from '@/components/ClientLayout'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono' })
+const pirataOne = Pirata_One({ subsets: ['latin'], weight: '400', variable: '--font-pirata' })
 
 export const metadata: Metadata = {
   title: 'CITY PULSE',
@@ -19,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={clsx(inter.variable, jetbrainsMono.variable, "bg-background text-foreground antialiased font-sans selection:bg-accent selection:text-black")}>
+      <body className={clsx(inter.variable, jetbrainsMono.variable, pirataOne.variable, "bg-background text-foreground antialiased font-sans selection:bg-accent selection:text-black")}>
         <ClientLayout>
           {children}
         </ClientLayout>
