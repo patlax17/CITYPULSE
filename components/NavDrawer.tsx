@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/context/StoreContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
 const LINKS = [
@@ -13,7 +14,16 @@ const LINKS = [
 ];
 
 export default function NavDrawer() {
-    const { isNavOpen, setIsNavOpen } = useStore();
+    const { isNavOpen, setIsNavOpen, resetGate } = useStore();
+    const router = useRouter();
+
+    const handleLinkClick = (href: string) => {
+        setIsNavOpen(false);
+        if (href === '/') {
+            resetGate();
+            router.push('/');
+        }
+    };
 
     return (
         <AnimatePresence>
@@ -49,7 +59,7 @@ export default function NavDrawer() {
                                     <Link
                                         key={link.href}
                                         href={link.href}
-                                        onClick={() => setIsNavOpen(false)}
+                                        onClick={() => handleLinkClick(link.href)}
                                         className="group flex items-center gap-4"
                                     >
                                         <span className="text-zinc-700 font-mono text-xs mt-1">0{index + 1}</span>

@@ -11,7 +11,7 @@ const config: Config = {
       colors: {
         background: "#050505",
         foreground: "#E5E5E5",
-        accent: "#00FF41",
+        accent: "#CC7722",
         ochre: "#CC7722",
         border: "#27272a", // zinc-800
       },

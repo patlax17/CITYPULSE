@@ -1,18 +1,32 @@
 'use client';
-import { useState } from 'react';
-import { Product } from '@/lib/data';
+import { useState, useCallback } from 'react';
+import { Product } from '@/data/products';
 import { useStore } from '@/context/StoreContext';
+import { ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { Loader2 } from 'lucide-react';
 
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export default function ProductCard({ product }: { product: Product }) {
-    const { addToCart, currency } = useStore();
+    const { currency, addToCart } = useStore();
     const [selectedSize, setSelectedSize] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [sizeError, setSizeError] = useState(false);
+    const [isFlipped, setIsFlipped] = useState(false);
 
+    // ── Desktop: Hover flip ──
+    const handleMouseEnter = useCallback(() => setIsFlipped(true), []);
+    const handleMouseLeave = useCallback(() => setIsFlipped(false), []);
+
+    // ── Mobile: Tap-to-flip toggle ──
+    const handleTap = useCallback(() => {
+        if (window.matchMedia('(pointer: coarse)').matches) {
+            setIsFlipped((prev) => !prev);
+        }
+    }, []);
+
+    // ── Checkout: Original Stripe Checkout Session via API route ──
     const handleBuyNow = async () => {
         if (!selectedSize) {
             setSizeError(true);
@@ -40,26 +54,59 @@ export default function ProductCard({ product }: { product: Product }) {
     const isSoldOut = product.status === 'SOLD OUT';
 
     return (
-        <div className="group relative bg-background border-r border-b border-zinc-800 flex flex-col h-full overflow-hidden">
-            {/* Status Label */}
-            <div className="absolute top-3 left-3 z-10">
-                {product.status !== 'AVAILABLE' && (
-                    <span className="bg-accent text-black px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider">
-                        {product.status}
-                    </span>
-                )}
+        <div
+            className="group relative bg-background border-r border-b border-zinc-800 flex flex-col h-full overflow-hidden"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+
+
+            {/* ── "BACK VIEW" label — Pulse Green on black ── */}
+            <div
+                className="absolute top-3 right-3 z-10"
+                style={{
+                    opacity: isFlipped ? 1 : 0,
+                    transition: 'opacity 400ms ease-in-out',
+                }}
+            >
+                <span
+                    className="px-2 py-1 text-[9px] font-mono uppercase tracking-widest border border-zinc-700"
+                    style={{ background: '#000', color: '#CC7722' }}
+                >
+                    Back View
+                </span>
             </div>
 
-            {/* Image Area */}
-            <div className="relative aspect-[3/4] bg-zinc-900 group-hover:opacity-90 transition-opacity duration-500">
+            {/* ── Image Area — 400ms crossfade ── */}
+            <div
+                className="relative aspect-[3/4] bg-zinc-900 cursor-pointer"
+                onClick={handleTap}
+            >
+                {/* Front Image */}
                 <img
-                    src={product.image}
-                    alt={product.title}
+                    src={product.frontImage}
+                    alt={`${product.title} — Front`}
                     className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                        opacity: isFlipped ? 0 : 1,
+                        transition: 'opacity 400ms ease-in-out',
+                        filter: 'blur(0.3px) contrast(0.97) brightness(1.02)',
+                    }}
+                />
+                {/* Back Image */}
+                <img
+                    src={product.backImage}
+                    alt={`${product.title} — Back`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                        opacity: isFlipped ? 1 : 0,
+                        transition: 'opacity 400ms ease-in-out',
+                        filter: 'blur(0.3px) contrast(0.97) brightness(1.02)',
+                    }}
                 />
             </div>
 
-            {/* Info Area */}
+            {/* ── Info Area ── */}
             <div className="p-4 flex flex-col gap-3 bg-background">
                 {/* Title + Price */}
                 <div className="flex justify-between items-start gap-2">
@@ -79,10 +126,10 @@ export default function ProductCard({ product }: { product: Product }) {
                                 key={size}
                                 onClick={() => setSelectedSize(size)}
                                 className={`flex-1 py-1 font-mono text-[9px] uppercase border transition-colors duration-150 ${selectedSize === size
-                                        ? 'border-accent text-accent bg-accent/10'
-                                        : sizeError
-                                            ? 'border-red-500/60 text-red-500/60'
-                                            : 'border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400'
+                                    ? 'border-accent text-accent bg-accent/10'
+                                    : sizeError
+                                        ? 'border-red-500/60 text-red-500/60'
+                                        : 'border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400'
                                     }`}
                             >
                                 {size}
@@ -91,7 +138,7 @@ export default function ProductCard({ product }: { product: Product }) {
                     </div>
                 )}
 
-                {/* Buy Now */}
+                {/* Buy Now — Stripe Checkout via API */}
                 <button
                     disabled={isSoldOut || loading}
                     onClick={handleBuyNow}
@@ -106,13 +153,14 @@ export default function ProductCard({ product }: { product: Product }) {
                     )}
                 </button>
 
-                {/* Add to Cart (secondary) */}
+                {/* Add to Cart — secondary action */}
                 {!isSoldOut && (
                     <button
                         onClick={() => addToCart(product)}
-                        className="w-full py-2 border border-zinc-800 text-zinc-500 font-mono text-[9px] uppercase tracking-widest hover:border-zinc-600 hover:text-zinc-400 transition-all duration-300"
+                        className="w-full py-2.5 border border-zinc-700 text-zinc-500 font-mono text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 hover:border-zinc-500 hover:text-zinc-300"
                     >
-                        + Add to Cart
+                        <ShoppingBag className="w-3 h-3" />
+                        Add to Cart
                     </button>
                 )}
             </div>

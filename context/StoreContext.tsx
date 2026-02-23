@@ -12,6 +12,7 @@ interface CartItem extends Product {
 interface StoreContextType {
     isEntered: boolean;
     enterSite: () => void;
+    resetGate: () => void;
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
     isNavOpen: boolean;
@@ -36,13 +37,8 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     const [spinsAvailable, setSpinsAvailable] = useState(2);
     const [currency, setCurrency] = useState<Currency>('USD');
 
-    // Load state from session storage
+    // Load spins from session storage (gate state is never persisted)
     useEffect(() => {
-        const storedEntered = sessionStorage.getItem('city_pulse_entered');
-        if (storedEntered === 'true') {
-            setIsEntered(true);
-        }
-
         const storedSpins = sessionStorage.getItem('city_pulse_spins');
         if (storedSpins) {
             setSpinsAvailable(parseInt(storedSpins));
@@ -51,7 +47,11 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
 
     const enterSite = () => {
         setIsEntered(true);
-        sessionStorage.setItem('city_pulse_entered', 'true');
+    };
+
+    // Reset gate so the video landing page shows again
+    const resetGate = () => {
+        setIsEntered(false);
     };
 
     const addToCart = (product: Product) => {
@@ -93,6 +93,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
             value={{
                 isEntered,
                 enterSite,
+                resetGate,
                 isCartOpen,
                 setIsCartOpen,
                 isNavOpen,

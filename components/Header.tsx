@@ -1,14 +1,20 @@
 'use client';
 import { ShoppingBag, Search, Menu } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import CurrencyToggle from './CurrencyToggle';
 
 export default function Header() {
-    const { cart, setIsCartOpen, setIsNavOpen, isEntered } = useStore();
+    const { cart, setIsCartOpen, setIsNavOpen, isEntered, resetGate } = useStore();
+    const router = useRouter();
 
     if (!isEntered) return null;
+
+    const handleLogoClick = () => {
+        resetGate();
+        router.push('/');
+    };
 
     return (
         <motion.header
@@ -17,7 +23,7 @@ export default function Header() {
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className="fixed top-0 left-0 right-0 h-[80px] z-[50] flex items-center justify-between px-6 border-b border-zinc-900/50 bg-background/90 backdrop-blur-md"
         >
-            {/* Left - Menu Trigger (Implicitly adding for navigation access) */}
+            {/* Left - Menu Trigger */}
             <button
                 onClick={() => setIsNavOpen(true)}
                 className="p-2 hover:text-accent transition-colors"
@@ -26,10 +32,14 @@ export default function Header() {
                 <Menu className="w-6 h-6" />
             </button>
 
-            {/* Center - Logo */}
-            <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-2xl font-black uppercase tracking-tighter hover:text-accent transition-colors cursor-pointer z-10">
+            {/* Center - Logo (resets gate on click) */}
+            <button
+                onClick={handleLogoClick}
+                className="absolute left-1/2 -translate-x-1/2 font-blackletter text-ochre text-3xl hover:opacity-80 transition-opacity cursor-pointer z-10"
+                style={{ letterSpacing: '0.01em', lineHeight: 1 }}
+            >
                 City Pulse
-            </Link>
+            </button>
 
             {/* Right - Icons */}
             <div className="flex items-center gap-4">

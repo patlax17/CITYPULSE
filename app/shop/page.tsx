@@ -1,4 +1,4 @@
-import { PRODUCTS } from '@/lib/data';
+import { PRODUCTS } from '@/data/products';
 import ProductCard from '@/components/ProductCard';
 
 export default function ShopPage() {

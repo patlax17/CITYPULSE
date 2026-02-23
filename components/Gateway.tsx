@@ -1,23 +1,75 @@
 'use client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/context/StoreContext';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 
 export default function Gateway() {
     const { isEntered, enterSite } = useStore();
     const videoRef = useRef<HTMLVideoElement>(null);
     const [ready, setReady] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);      // optimistic: assume audio will play
+    const [showTapHint, setShowTapHint] = useState(false); // shown only if autoplay-with-audio is blocked
 
-    // Ensure autoplay fires even after hydration
+    // Runs every time the gateway mounts (first visit + every resetGate return)
     useEffect(() => {
-        if (videoRef.current) {
-            videoRef.current.play().catch(() => {
-                // Autoplay blocked — video stays as poster fallback
-            });
-        }
-        // Mark "ready" after 3.5s so user soaks in the video before CTA appears
+        const video = videoRef.current;
+        if (!video) return;
+
+        // Reset state for this mount
+        setIsMuted(false);
+        setShowTapHint(false);
+
+        // Set volume and attempt unmuted play
+        video.muted = false;
+        video.volume = 0.7;
+
+        const attemptPlay = async () => {
+            try {
+                await video.play();
+                // Unmuted autoplay succeeded — audio is live
+                setIsMuted(false);
+                setShowTapHint(false);
+            } catch {
+                // Browser blocked unmuted autoplay — fall back to muted + hint
+                video.muted = true;
+                setIsMuted(true);
+                try {
+                    await video.play();
+                } catch {
+                    // Fully blocked (rare) — video stays as poster
+                }
+                setShowTapHint(true);
+            }
+        };
+
+        attemptPlay();
+
+        // CTA appears after 3.5s
         const timer = setTimeout(() => setReady(true), 3500);
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            setReady(false);
+        };
+    }, [isEntered]); // re-run whenever isEntered toggles (covers resetGate)
+
+    // Called when user taps anywhere — unmutes and dismisses hint
+    const handleInteraction = useCallback(() => {
+        const video = videoRef.current;
+        if (!video) return;
+        video.muted = false;
+        video.volume = 0.7;
+        setIsMuted(false);
+        setShowTapHint(false);
+    }, []);
+
+    const toggleMute = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        const video = videoRef.current;
+        if (!video) return;
+        const newMuted = !video.muted;
+        video.muted = newMuted;
+        if (!newMuted) video.volume = 0.7;
+        setIsMuted(newMuted);
     }, []);
 
     return (
@@ -30,6 +82,7 @@ export default function Gateway() {
                     initial={{ opacity: 1, y: 0 }}
                     exit={{ y: '-100%' }}
                     transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1] }}
+                    onClick={handleInteraction}
                 >
                     {/* ── Background Video with slow Ken Burns zoom ── */}
                     <motion.div
@@ -43,7 +96,6 @@ export default function Gateway() {
                             ref={videoRef}
                             src="/landing_video.mp4"
                             autoPlay
-                            muted
                             loop
                             playsInline
                             className="w-full h-full object-cover"
@@ -96,31 +148,22 @@ export default function Gateway() {
                                 }}
                             >
                                 <defs>
-                                    {/* Arch path */}
-                                    <path
-                                        id="arch"
-                                        d="M 30,220 Q 300,20 570,220"
-                                    />
+                                    <path id="arch" d="M 30,220 Q 300,20 570,220" />
                                 </defs>
-
                                 <text
                                     fontFamily="var(--font-pirata), 'Old English Text MT', serif"
                                     fontSize="108"
                                     fill="#CC7722"
                                     letterSpacing="2"
                                 >
-                                    <textPath
-                                        href="#arch"
-                                        startOffset="50%"
-                                        textAnchor="middle"
-                                    >
+                                    <textPath href="#arch" startOffset="50%" textAnchor="middle">
                                         City Pulse
                                     </textPath>
                                 </text>
                             </svg>
                         </motion.div>
 
-                        {/* Tagline — fades in after title */}
+                        {/* Tagline */}
                         <motion.p
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 0.5, y: 0 }}
@@ -130,12 +173,12 @@ export default function Gateway() {
                             City Never Sleeps · Style Never Fades
                         </motion.p>
 
-                        {/* CTA Button — delayed 3.5s so user absorbs the atmosphere */}
+                        {/* CTA Button */}
                         <motion.button
                             initial={{ opacity: 0, y: 16 }}
                             animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
                             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                            onClick={enterSite}
+                            onClick={(e) => { e.stopPropagation(); handleInteraction(); enterSite(); }}
                             className="px-10 py-3.5 border border-zinc-600 text-ochre font-mono text-xs uppercase tracking-[0.25em] cursor-pointer hover:bg-ochre hover:text-black hover:border-ochre transition-all duration-500"
                             style={{ background: 'rgba(0,0,0,0.5)', pointerEvents: ready ? 'auto' : 'none' }}
                         >
@@ -143,7 +186,7 @@ export default function Gateway() {
                         </motion.button>
                     </div>
 
-                    {/* ── Subtle corner coordinates — later reveal ── */}
+                    {/* ── Corner: location ── */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 0.3 }}
@@ -154,15 +197,57 @@ export default function Gateway() {
                         Newark, NJ — Est. 2026
                     </motion.div>
 
-                    <motion.div
+                    {/* ── Mute toggle (always visible after 3s) ── */}
+                    <motion.button
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.3 }}
+                        animate={{ opacity: 0.6 }}
                         transition={{ delay: 3, duration: 1.2 }}
-                        className="absolute bottom-6 right-6 font-mono text-[10px] text-zinc-600 uppercase tracking-widest"
-                        style={{ zIndex: 3 }}
+                        onClick={toggleMute}
+                        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+                        className="absolute bottom-6 right-6 font-mono text-[10px] text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-zinc-200 transition-colors duration-300"
+                        style={{ zIndex: 5 }}
                     >
-                        CP ® Lineage
-                    </motion.div>
+                        {isMuted ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <line x1="23" y1="9" x2="17" y2="15" />
+                                <line x1="17" y1="9" x2="23" y2="15" />
+                            </svg>
+                        ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                            </svg>
+                        )}
+                        {isMuted ? 'Unmute' : 'Mute'}
+                    </motion.button>
+
+                    {/* ── "Tap for audio" hint — only shown if browser blocked unmuted autoplay ── */}
+                    <AnimatePresence>
+                        {showTapHint && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ delay: 1, duration: 0.6 }}
+                                className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full font-mono text-[10px] uppercase tracking-widest text-zinc-300 pointer-events-none"
+                                style={{
+                                    zIndex: 6,
+                                    background: 'rgba(0,0,0,0.55)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    backdropFilter: 'blur(8px)',
+                                }}
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                                </svg>
+                                Tap anywhere for audio
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.section>
             )}
         </AnimatePresence>
