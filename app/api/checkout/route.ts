@@ -36,6 +36,30 @@ export async function POST(req: NextRequest) {
             shipping_address_collection: {
                 allowed_countries: ['US', 'NG', 'GB', 'CA'],
             },
+            shipping_options: [
+                {
+                    shipping_rate_data: {
+                        type: 'fixed_amount',
+                        fixed_amount: { amount: 999, currency: 'usd' }, // $9.99
+                        display_name: 'Standard Shipping',
+                        delivery_estimate: {
+                            minimum: { unit: 'business_day', value: 5 },
+                            maximum: { unit: 'business_day', value: 7 },
+                        },
+                    },
+                },
+                {
+                    shipping_rate_data: {
+                        type: 'fixed_amount',
+                        fixed_amount: { amount: 1999, currency: 'usd' }, // $19.99
+                        display_name: 'Express Shipping',
+                        delivery_estimate: {
+                            minimum: { unit: 'business_day', value: 2 },
+                            maximum: { unit: 'business_day', value: 3 },
+                        },
+                    },
+                },
+            ],
             metadata: {
                 product_id: product.id,
                 product_title: product.title,
