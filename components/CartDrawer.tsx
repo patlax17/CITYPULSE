@@ -1,12 +1,39 @@
 'use client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/context/StoreContext';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
 
 export default function CartDrawer() {
     const { isCartOpen, setIsCartOpen, cart, removeFromCart } = useStore();
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
 
     const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+    const handleCheckout = async () => {
+        if (cart.length === 0 || isCheckingOut) return;
+        setIsCheckingOut(true);
+        try {
+            // Stripe Checkout is per-product — check out the first item in cart
+            const item = cart[0];
+            const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: item.id, size: item.size }),
+            });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('Checkout failed. Please try again.');
+                setIsCheckingOut(false);
+            }
+        } catch {
+            alert('Something went wrong. Please try again.');
+            setIsCheckingOut(false);
+        }
+    };
 
     return (
         <AnimatePresence>
@@ -42,8 +69,14 @@ export default function CartDrawer() {
                             ) : (
                                 cart.map((item) => (
                                     <div key={item.id} className="flex gap-4">
-                                        <div className="w-20 h-24 bg-zinc-900 relative border border-zinc-800 flex-shrink-0">
-                                            <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-700 font-mono uppercase">IMG</div>
+                                        <div className="w-20 h-24 bg-zinc-900 relative border border-zinc-800 flex-shrink-0 overflow-hidden">
+                                            <Image
+                                                src={item.image || item.frontImage}
+                                                alt={item.title}
+                                                fill
+                                                className="object-cover"
+                                                sizes="80px"
+                                            />
                                         </div>
                                         <div className="flex flex-col flex-1 justify-between py-1">
                                             <div>
@@ -65,8 +98,16 @@ export default function CartDrawer() {
                                 <span className="font-mono text-xs uppercase text-zinc-500">Subtotal</span>
                                 <span className="font-mono text-xl text-foreground">${subtotal}.00</span>
                             </div>
-                            <button className="w-full py-4 border border-zinc-800 text-foreground font-bold uppercase tracking-widest hover:bg-accent hover:text-black hover:border-accent transition-all duration-300">
-                                Checkout
+                            <button
+                                onClick={handleCheckout}
+                                disabled={isCheckingOut || cart.length === 0}
+                                className="w-full py-4 border border-zinc-800 text-foreground font-bold uppercase tracking-widest hover:bg-accent hover:text-black hover:border-accent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {isCheckingOut ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                                ) : (
+                                    'Checkout'
+                                )}
                             </button>
                         </div>
                     </motion.div>
