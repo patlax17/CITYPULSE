@@ -2,9 +2,9 @@
 import { useState, useCallback } from 'react';
 import { Product } from '@/data/products';
 import { useStore } from '@/context/StoreContext';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
-import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -77,10 +77,19 @@ export default function ProductCard({ product }: { product: Product }) {
                 </span>
             </div>
 
-            {/* ── Image Area — 400ms crossfade ── */}
-            <div
-                className="relative aspect-[3/4] bg-zinc-900 cursor-pointer"
-                onClick={handleTap}
+            {/* ── Image Area — click to view PDP, hover/tap to flip ── */}
+            <Link
+                href={`/shop/${product.id}`}
+                className="relative aspect-[3/4] bg-zinc-900 block"
+                onClick={(e) => {
+                    // On touch devices, first tap flips — second tap navigates
+                    if (window.matchMedia('(pointer: coarse)').matches) {
+                        if (!isFlipped) {
+                            e.preventDefault();
+                            handleTap();
+                        }
+                    }
+                }}
             >
                 {/* Front Image */}
                 <img
@@ -104,15 +113,17 @@ export default function ProductCard({ product }: { product: Product }) {
                         filter: 'blur(0.3px) contrast(0.97) brightness(1.02)',
                     }}
                 />
-            </div>
+            </Link>
 
             {/* ── Info Area ── */}
             <div className="p-4 flex flex-col gap-3 bg-background">
                 {/* Title + Price */}
                 <div className="flex justify-between items-start gap-2">
-                    <h3 className="text-sm font-bold uppercase leading-tight text-foreground">
-                        {product.title}
-                    </h3>
+                    <Link href={`/shop/${product.id}`} className="hover:text-accent transition-colors">
+                        <h3 className="text-sm font-bold uppercase leading-tight text-foreground">
+                            {product.title}
+                        </h3>
+                    </Link>
                     <span className="font-mono text-xs text-zinc-400 whitespace-nowrap">
                         {formatCurrency(product.price, currency)}
                     </span>
