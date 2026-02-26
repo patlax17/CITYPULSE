@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { PRODUCTS } from '@/lib/data';
+import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
     try {
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
         // Two modes:
         // 1. Single product: { productId, size }               — Buy Now / PDP
         // 2. Full cart:      { items: [{id, size, quantity}] } — Cart Drawer
-        let line_items: NonNullable<Parameters<typeof stripe.checkout.sessions.create>[0]['line_items']>;
+        let line_items: Stripe.Checkout.SessionCreateParams.LineItem[];
         let metadataSummary = '';
 
         if (body.items && Array.isArray(body.items)) {
