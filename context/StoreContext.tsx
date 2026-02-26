@@ -64,8 +64,9 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
             }
             return [...prev, { ...product, quantity: 1 }];
         });
-        setIsCartOpen(true);
+        // Cart stays closed — badge count on the header icon shows the update
     };
+
 
     const removeFromCart = (productId: string) => {
         setCart((prev) => prev.filter((item) => item.id !== productId));

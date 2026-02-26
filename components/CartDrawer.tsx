@@ -15,12 +15,16 @@ export default function CartDrawer() {
         if (cart.length === 0 || isCheckingOut) return;
         setIsCheckingOut(true);
         try {
-            // Stripe Checkout is per-product — check out the first item in cart
-            const item = cart[0];
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: item.id, size: item.size }),
+                body: JSON.stringify({
+                    items: cart.map((item) => ({
+                        id: item.id,
+                        size: item.size,
+                        quantity: item.quantity,
+                    })),
+                }),
             });
             const data = await res.json();
             if (data.url) {
@@ -34,6 +38,7 @@ export default function CartDrawer() {
             setIsCheckingOut(false);
         }
     };
+
 
     return (
         <AnimatePresence>

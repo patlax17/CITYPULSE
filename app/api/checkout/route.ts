@@ -4,35 +4,62 @@ import { PRODUCTS } from '@/lib/data';
 
 export async function POST(req: NextRequest) {
     try {
-        const { productId, size } = await req.json();
-
-        const product = PRODUCTS.find((p) => p.id === productId);
-        if (!product) {
-            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-        }
-
+        const body = await req.json();
         const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+
+        // Two modes:
+        // 1. Single product: { productId, size }               — Buy Now / PDP
+        // 2. Full cart:      { items: [{id, size, quantity}] } — Cart Drawer
+        let line_items: NonNullable<Parameters<typeof stripe.checkout.sessions.create>[0]['line_items']>;
+        let metadataSummary = '';
+
+        if (body.items && Array.isArray(body.items)) {
+            // ── CART MODE: multiple line items ──
+            line_items = body.items.map((cartItem: { id: string; size?: string; quantity: number }) => {
+                const product = PRODUCTS.find((p) => p.id === cartItem.id);
+                if (!product) throw new Error(`Product ${cartItem.id} not found`);
+                return {
+                    quantity: cartItem.quantity,
+                    price_data: {
+                        currency: 'usd',
+                        unit_amount: product.price * 100,
+                        product_data: {
+                            name: product.title,
+                            description: cartItem.size ? `Size: ${cartItem.size}` : undefined,
+                            images: [`${baseUrl}${product.image}`],
+                            metadata: { product_id: product.id, size: cartItem.size || 'N/A' },
+                        },
+                    },
+                };
+            });
+            metadataSummary = body.items
+                .map((i: { id: string; quantity: number }) => `${i.id}(x${i.quantity})`)
+                .join(', ');
+        } else {
+            // ── SINGLE PRODUCT MODE ──
+            const { productId, size } = body;
+            const product = PRODUCTS.find((p) => p.id === productId);
+            if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+
+            line_items = [{
+                quantity: 1,
+                price_data: {
+                    currency: 'usd',
+                    unit_amount: product.price * 100,
+                    product_data: {
+                        name: product.title,
+                        description: size ? `Size: ${size}` : undefined,
+                        images: [`${baseUrl}${product.image}`],
+                        metadata: { product_id: product.id, size: size || 'N/A' },
+                    },
+                },
+            }];
+            metadataSummary = `${product.id}(x1)`;
+        }
 
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
-            line_items: [
-                {
-                    quantity: 1,
-                    price_data: {
-                        currency: 'usd',
-                        unit_amount: product.price * 100, // Stripe uses cents
-                        product_data: {
-                            name: product.title,
-                            description: size ? `Size: ${size}` : undefined,
-                            images: [`${baseUrl}${product.image}`],
-                            metadata: {
-                                product_id: product.id,
-                                size: size || 'N/A',
-                            },
-                        },
-                    },
-                },
-            ],
+            line_items,
             shipping_address_collection: {
                 allowed_countries: ['US', 'NG', 'GB', 'CA'],
             },
@@ -40,7 +67,7 @@ export async function POST(req: NextRequest) {
                 {
                     shipping_rate_data: {
                         type: 'fixed_amount',
-                        fixed_amount: { amount: 999, currency: 'usd' }, // $9.99
+                        fixed_amount: { amount: 999, currency: 'usd' },
                         display_name: 'Standard Shipping',
                         delivery_estimate: {
                             minimum: { unit: 'business_day', value: 5 },
@@ -51,7 +78,7 @@ export async function POST(req: NextRequest) {
                 {
                     shipping_rate_data: {
                         type: 'fixed_amount',
-                        fixed_amount: { amount: 1999, currency: 'usd' }, // $19.99
+                        fixed_amount: { amount: 1999, currency: 'usd' },
                         display_name: 'Express Shipping',
                         delivery_estimate: {
                             minimum: { unit: 'business_day', value: 2 },
@@ -60,20 +87,12 @@ export async function POST(req: NextRequest) {
                     },
                 },
             ],
-            metadata: {
-                product_id: product.id,
-                product_title: product.title,
-                size: size || 'N/A',
-            },
+            metadata: { items: metadataSummary },
             success_url: `${baseUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${baseUrl}/shop`,
-            // Receipt auto-sent to buyer by Stripe
             payment_intent_data: {
-                receipt_email: undefined, // Stripe will populate from buyer's card
-                metadata: {
-                    product_title: product.title,
-                    size: size || 'N/A',
-                },
+                receipt_email: undefined,
+                metadata: { items: metadataSummary },
             },
         });
 
