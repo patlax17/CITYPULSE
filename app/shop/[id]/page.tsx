@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!product) return { title: 'Product Not Found | City Pulse' };
     return {
         title: `${product.name} | City Pulse`,
-        description: `Shop the ${product.name} — premium streetwear from City Pulse. Free shipping on orders over $200.`,
+        description: `Shop the ${product.name} — premium streetwear from City Pulse.`,
         openGraph: {
             title: `${product.name} | City Pulse`,
             description: `Shop the ${product.name} — premium streetwear from City Pulse.`,

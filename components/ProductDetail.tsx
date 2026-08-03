@@ -163,9 +163,6 @@ export default function ProductDetail({ product }: { product: Product }) {
                             <span className="font-mono text-2xl text-foreground">
                                 {formatCurrency(product.price, currency)}
                             </span>
-                            <span className="font-mono text-xs text-zinc-600 uppercase tracking-widest">
-                                Free shipping over $200
-                            </span>
                         </div>
                     </div>
 
@@ -195,10 +192,10 @@ export default function ProductDetail({ product }: { product: Product }) {
                                         key={size}
                                         onClick={() => setSelectedSize(size)}
                                         className={`py-3 font-mono text-xs uppercase border transition-all duration-200 ${selectedSize === size
-                                                ? 'border-accent text-accent bg-accent/10'
-                                                : sizeError
-                                                    ? 'border-red-500/60 text-red-500/60'
-                                                    : 'border-zinc-800 text-zinc-600 hover:border-zinc-500 hover:text-zinc-300'
+                                            ? 'border-accent text-accent bg-accent/10'
+                                            : sizeError
+                                                ? 'border-red-500/60 text-red-500/60'
+                                                : 'border-zinc-800 text-zinc-600 hover:border-zinc-500 hover:text-zinc-300'
                                             }`}
                                     >
                                         {size}
