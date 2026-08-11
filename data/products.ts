@@ -92,7 +92,7 @@ export const PRODUCTS: Product[] = [
         id: '7',
         name: 'CP Chaos Muscle Tee - Black',
         title: 'CP CHAOS MUSCLE TEE — BLACK',
-        price: 129,
+        price: 100,
         frontImage: '/images/products/noir/chaos-muscle-tee-black.webp',
         backImage: '/images/products/noir/chaos-muscle-tee-black.webp',
         image: '/images/products/noir/chaos-muscle-tee-black.webp',
